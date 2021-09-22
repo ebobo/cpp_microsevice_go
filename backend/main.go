@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/ebobo/cpp_microservice_go/cors"
+	"github.com/gorilla/mux"
 )
 
 type Parameter struct {
@@ -36,11 +37,12 @@ func setParameters (w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	log.Println("server is running on port 5006")
-	
-	parameterHandler := http.HandlerFunc(setParameters)
-    http.Handle("/parameters", cors.Middleware(parameterHandler))
+	m := mux.NewRouter()
+		
 
-	err := http.ListenAndServe(":5006", nil)
+	m.Handle("/parameters", cors.Middleware(http.HandlerFunc(setParameters)))
+
+	err := http.ListenAndServe(":5006", m)
 	if err != nil {
 		log.Fatal(err)
 	}
