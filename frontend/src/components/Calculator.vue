@@ -41,6 +41,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
+import { setParameters } from '../services/data';
 
 export default Vue.extend({
   components: {},
@@ -58,8 +59,11 @@ export default Vue.extend({
 
   methods: {
     send() {
-      this.result = 0;
-      this.result = +this.numberA + +this.numberB;
+      setParameters({ A: this.numberA, B: this.numberB })
+        .then((response) => console.log(response))
+        .catch((error) => {
+          console.log(error);
+        });
     },
   },
 });

@@ -1,18 +1,19 @@
 package main
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"log"
 	"net/http"
 
 	"github.com/ebobo/cpp_microservice_go/cors"
-	"github.com/gorilla/mux"
 )
 
 type Parameter struct {
-    A int32 `json:"A"`
-	B int32 `json:"B"`
-	Type string `json:"type"`
+    A string `json:"A"`
+	B string `json:"B"`
 }
+
 
 func setParameters (w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -21,8 +22,14 @@ func setParameters (w http.ResponseWriter, r *http.Request) {
         w.WriteHeader(http.StatusOK)
         w.Write([]byte(`{"message": "get called"}`))
     case "POST":
-        w.WriteHeader(http.StatusCreated)
-        w.Write([]byte(`{"message": "post called"}`))
+		
+		reqBody, _ := ioutil.ReadAll(r.Body)
+		var para Parameter 
+		json.Unmarshal(reqBody, &para)
+		log.Println(para)
+
+		json.NewEncoder(w).Encode(para)
+		
     case "PUT":
         w.WriteHeader(http.StatusAccepted)
         w.Write([]byte(`{"message": "put called"}`))
@@ -35,14 +42,14 @@ func setParameters (w http.ResponseWriter, r *http.Request) {
     }
 }
 
+
 func main() {
 	log.Println("server is running on port 5006")
-	m := mux.NewRouter()
-		
 
-	m.Handle("/parameters", cors.Middleware(http.HandlerFunc(setParameters)))
+	paraHandler := http.HandlerFunc(setParameters)
+	http.Handle("/api/parameters", cors.Middleware(paraHandler))
 
-	err := http.ListenAndServe(":5006", m)
+	err := http.ListenAndServe(":5006", nil)
 	if err != nil {
 		log.Fatal(err)
 	}
