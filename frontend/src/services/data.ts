@@ -21,13 +21,11 @@ http.interceptors.response.use(
     ) {
       console.log('Logging the error', error);
     }
-
     throw error;
   }
 );
 
 export async function setParameters(data: CalcData): Promise<void> {
-  console.log('data', data);
   return http
     .post<void>(`/parameters`, data, {
       headers: {

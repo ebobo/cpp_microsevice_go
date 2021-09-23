@@ -10,8 +10,8 @@ import (
 )
 
 type Parameter struct {
-    A string `json:"A"`
-	B string `json:"B"`
+    A int32 `json:"A"`
+	B int32 `json:"B"`
 }
 
 
@@ -22,12 +22,11 @@ func setParameters (w http.ResponseWriter, r *http.Request) {
         w.WriteHeader(http.StatusOK)
         w.Write([]byte(`{"message": "get called"}`))
     case "POST":
-		
 		reqBody, _ := ioutil.ReadAll(r.Body)
 		var para Parameter 
 		json.Unmarshal(reqBody, &para)
 		log.Println(para)
-
+        
 		json.NewEncoder(w).Encode(para)
 		
     case "PUT":

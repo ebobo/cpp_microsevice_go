@@ -1,10 +1,10 @@
 <template>
   <v-container>
-    <h3 class="ma-4 primary--text">Calculator</h3>
+    <h3 class="ma-2 primary--text">Calculator</h3>
     <h3 class="ma-4 blue-grey--text">parameters :</h3>
 
     <v-row class="ma-2">
-      <v-col cols="6">
+      <v-col cols="3">
         <v-text-field
           v-model="numberA"
           class="mt-0 pt-0"
@@ -16,7 +16,7 @@
           max="100"
         ></v-text-field>
       </v-col>
-      <v-col cols="6">
+      <v-col cols="3">
         <v-text-field
           v-model="numberB"
           class="mt-0 pt-0"
@@ -28,9 +28,14 @@
           max="100"
         ></v-text-field>
       </v-col>
+      <v-col cols="3">
+        <v-btn color="primary" @click="send">Send</v-btn>
+      </v-col>
     </v-row>
     <v-row class="ma-2">
-      <v-btn color="primary" @click="send">Send</v-btn>
+      <v-col cols="8">
+        <v-progress-linear v-model="progress"></v-progress-linear>
+      </v-col>
     </v-row>
 
     <v-row class="ma-2">
@@ -41,25 +46,31 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { setParameters } from '../services/data';
+import { setParameters, CalcData } from '../services/data';
 
 export default Vue.extend({
   components: {},
   data(): {
-    numberA: number;
-    numberB: number;
+    numberA: string;
+    numberB: string;
+    progress: number;
     result: number;
   } {
     return {
-      numberA: 0,
-      numberB: 0,
+      numberA: '0',
+      numberB: '0',
+      progress: 0,
       result: 0,
     };
   },
 
   methods: {
     send() {
-      setParameters({ A: this.numberA, B: this.numberB })
+      const data: CalcData = {
+        A: parseInt(this.numberA),
+        B: parseInt(this.numberB),
+      };
+      setParameters(data)
         .then((response) => console.log(response))
         .catch((error) => {
           console.log(error);
