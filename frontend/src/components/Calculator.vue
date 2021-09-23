@@ -29,7 +29,12 @@
         ></v-text-field>
       </v-col>
       <v-col cols="3">
-        <v-btn color="primary" @click="send">Send</v-btn>
+        <v-btn
+          color="primary"
+          :disabled="isWebSocketConnectionOpen"
+          @click="send"
+          >Send</v-btn
+        >
       </v-col>
     </v-row>
     <v-row class="ma-2">
@@ -54,27 +59,60 @@ export default Vue.extend({
     numberA: string;
     numberB: string;
     progress: number;
+    websocketConnection: null | WebSocket;
+    isWebSocketConnectionOpen: boolean;
     result: number;
   } {
     return {
       numberA: '0',
       numberB: '0',
       progress: 0,
+      websocketConnection: null,
+      isWebSocketConnectionOpen: false,
       result: 0,
     };
   },
 
   methods: {
+    //send the parameters
     send() {
       const data: CalcData = {
         A: parseInt(this.numberA),
         B: parseInt(this.numberB),
       };
       setParameters(data)
-        .then((response) => console.log(response))
+        .then((response) => this.parametersSended(response))
         .catch((error) => {
           console.log(error);
         });
+    },
+
+    //server got the parameter
+    parametersSended(data: any) {
+      this.progress = 0;
+
+      if (!this.websocketConnection) {
+        console.log('make a new connection');
+        this.websocketConnection = new WebSocket(
+          process.env.VUE_APP_WS_BASE_PATH
+        );
+
+        this.websocketConnection.onopen = () => {
+          console.log('Connected to WebSocket server');
+          this.isWebSocketConnectionOpen = true;
+        };
+
+        this.websocketConnection.onclose = () => {
+          console.log('Disconnected with WebSocket server');
+          this.isWebSocketConnectionOpen = false;
+          this.progress = 100;
+          this.websocketConnection = null;
+        };
+
+        this.websocketConnection.onmessage = (event) => {
+          this.progress = event?.data;
+        };
+      }
     },
   },
 });
