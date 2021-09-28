@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package protos;
+
+import "google/protobuf/empty.proto";
+
+// generate go file "protoc --go_out=paths=source_relative:. ./proto/*.proto" 
+option go_package = "github.com/ebobo/cpp_microsevice_go/protos";
+
+// with grpc plugin "protoc --go_out=plugins=grpc,paths=source_relative:. ./protos/*.proto"
+service Claculator{    
+    // rpc GetResult (Question) returns (Answer) {} 
+    // use grpc client to start a stream for monitering comming question
+    rpc Questions(google.protobuf.Empty) returns (stream QuestionRaised);
+    rpc QuestionAnswered(Answer) returns (google.protobuf.Empty);
+}
+
+message QuestionRaised {
+    string id = 1;
+    int32 A = 2;
+    int32 B = 3;
+    string type = 4;
+}
+
+message Answer {
+    string id = 1;
+    int32 result = 2;
+}
+
+
