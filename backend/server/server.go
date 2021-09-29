@@ -4,10 +4,13 @@ import (
 	"context"
 	"log"
 	"sync"
+
+	"github.com/ebobo/cpp_microservice_go/server/service"
 )
 
 // Server is the Calculation Backend Server
 type Server struct {
+	service     *service.Service
 	grpcAddr    string
 	restAddr    string
 	ctx         context.Context
@@ -39,6 +42,9 @@ func (s *Server) Start() error {
 	s.restStopped = &sync.WaitGroup{}
 	s.grpcStopped = &sync.WaitGroup{}
 	s.grpcStarted = &sync.WaitGroup{}
+
+	// Start the service
+	s.service = service.NewService()
 
 	// Start gRPC interface
 	s.grpcStarted.Add(1)

@@ -25,6 +25,8 @@ func (c *GrpcClient) Init() error {
 	if err != nil {
 		log.Fatalf("did not connect %v", err)
 		return err
+	} else {
+		log.Printf("connnect to grpc server at %s", c.serverURL)
 	}
 	c.client = protos.NewClaculatorClient(conn)
 	return nil
