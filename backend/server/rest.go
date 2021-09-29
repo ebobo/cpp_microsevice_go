@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"log"
@@ -8,8 +9,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ebobo/cpp_microservice_go/cors"
+	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+	"github.com/rs/cors"
 )
 
 type Parameter struct {
@@ -22,7 +25,7 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
-var progress int32 = 0
+var progress int = 0
 
 func startProgess() {
 	tk := time.NewTicker(1 * time.Second)
@@ -47,6 +50,11 @@ func reportProgess(conn *websocket.Conn) {
 			break
 		}
 	}
+}
+
+func home(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`Hello, This is calculator server`))
 }
 
 func setParameters(w http.ResponseWriter, r *http.Request) {
@@ -88,16 +96,48 @@ func wsServices(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) startREST() {
-	log.Println("rest server is running on port 5006")
+	m := mux.NewRouter()
+	m.HandleFunc("/api/parameters", setParameters).Methods("POST")
+	m.HandleFunc("/api/ws", wsServices).Methods("GET")
+	m.HandleFunc("/", home).Methods("GET")
 
-	paraHandler := http.HandlerFunc(setParameters)
-	http.Handle("/api/parameters", cors.Middleware(paraHandler))
+	// Add CORS
+	cors := cors.New(cors.Options{
+		AllowCredentials: true,
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"POST, GET, OPTIONS, PUT, DELETE"},
+		MaxAge:           31,
+		Debug:            true,
+	})
 
-	wsHandler := http.HandlerFunc(wsServices)
-	http.Handle("/api/ws", cors.Middleware(wsHandler))
-
-	err := http.ListenAndServe(":5006", nil)
-	if err != nil {
-		log.Fatal(err)
+	httpServer := &http.Server{
+		Addr:              s.restAddr,
+		Handler:           handlers.ProxyHeaders(cors.Handler(m)),
+		ReadTimeout:       (10 * time.Second),
+		ReadHeaderTimeout: (8 * time.Second),
+		WriteTimeout:      (45 * time.Second),
 	}
+
+	// Shut down webserver when done
+	go func() {
+		<-s.ctx.Done()
+		log.Printf("Shutting down REST interface")
+		err := httpServer.Shutdown(context.Background())
+		if err != nil {
+			log.Printf("Error shutting down REST interface: %v", err)
+		}
+		s.restStopped.Done()
+	}()
+
+	// Start webserver
+	go func() {
+		log.Printf("Starting REST at '%s'", s.restAddr)
+		s.restStarted.Done()
+		err := httpServer.ListenAndServe()
+		if err != nil {
+			log.Printf("REST interface: %v", err)
+		} else {
+			log.Printf("REST interface shut down")
+		}
+	}()
 }

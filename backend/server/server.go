@@ -12,9 +12,9 @@ type Server struct {
 	restAddr    string
 	ctx         context.Context
 	cancel      context.CancelFunc
-	grpcStarted *sync.WaitGroup
 	restStarted *sync.WaitGroup
 	restStopped *sync.WaitGroup
+	grpcStarted *sync.WaitGroup
 	grpcStopped *sync.WaitGroup
 }
 
@@ -41,10 +41,10 @@ func (s *Server) Start() error {
 	s.grpcStarted = &sync.WaitGroup{}
 
 	// Start gRPC interface
-	// s.grpcStarted.Add(1)
-	// s.grpcStopped.Add(1)
-	// s.startGRPC()
-	// s.grpcStarted.Wait()
+	s.grpcStarted.Add(1)
+	s.grpcStopped.Add(1)
+	s.startGRPC()
+	s.grpcStarted.Wait()
 
 	// REST interface
 	if s.restAddr != "" {
@@ -61,8 +61,13 @@ func (s *Server) Start() error {
 
 // Shutdown takes down the network interfaces and stops the servers.
 func (s *Server) Shutdown() {
+	log.Printf("server Shutdown 1")
+
+	if s.cancel != nil {
+		s.cancel()
+	}
 
 	// Wait until interfaces shut down
-	// s.grpcStopped.Wait()
+	s.grpcStopped.Wait()
 	s.restStopped.Wait()
 }
