@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/ebobo/cpp_microservice_go/model"
@@ -9,26 +10,30 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-type ClaculatorServer struct {
+type ClaculatorService struct {
 	questionStream protos.Claculator_QuestionsServer
+	ctx            context.Context
 }
 
-func NewClaculatorServer() *ClaculatorServer {
-	return &ClaculatorServer{}
+func NewClaculatorService(c context.Context) *ClaculatorService {
+	return &ClaculatorService{
+		ctx: c,
+	}
 }
 
-func (cs *ClaculatorServer) Questions(_ *emptypb.Empty, stream protos.Claculator_QuestionsServer) error {
-	error := make(chan error)
+func (cs *ClaculatorService) Questions(_ *emptypb.Empty, stream protos.Claculator_QuestionsServer) error {
 	cs.questionStream = stream
-	return <-error
+	<-cs.ctx.Done()
+	return nil
 }
 
-func (cs *ClaculatorServer) QuestionAnswered(ctx context.Context, in *protos.Answer) (*emptypb.Empty, error) {
+func (cs *ClaculatorService) QuestionAnswered(ctx context.Context, in *protos.Answer) (*emptypb.Empty, error) {
+	fmt.Println("QuestionAnswered ", in.Result)
 	return &emptypb.Empty{}, nil
 }
 
 // Notify the client for Question added
-func (cs *ClaculatorServer) Notify(id string, para *model.Parameter) {
+func (cs *ClaculatorService) Notify(id string, para *model.Parameter) {
 	m := protos.QuestionRaised{}
 	m.Id = id
 	m.A = para.A
@@ -39,5 +44,4 @@ func (cs *ClaculatorServer) Notify(id string, para *model.Parameter) {
 	if err != nil {
 		log.Fatalf("Error %v", err)
 	}
-
 }

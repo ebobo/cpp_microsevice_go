@@ -44,7 +44,7 @@ func (s *Server) Start() error {
 	s.grpcStarted = &sync.WaitGroup{}
 
 	// Start the service
-	s.service = service.NewService()
+	s.service = service.NewService(s.ctx, s.cancel)
 
 	// Start gRPC interface
 	s.grpcStarted.Add(1)

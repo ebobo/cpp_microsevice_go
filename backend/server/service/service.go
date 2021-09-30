@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/ebobo/cpp_microservice_go/protos"
@@ -17,27 +18,37 @@ import (
 // from the package, and can be accessed by anyone outside the package
 // that declares it.
 type Service struct {
-	CalcServer         *ClaculatorServer
-	started            *sync.WaitGroup
-	stopped            *sync.WaitGroup
-	ctx                context.Context
-	cancel             context.CancelFunc
-	internalClientConn *grpc.ClientConn
+	CalcService *ClaculatorService
+	stopped     *sync.WaitGroup
+	ctx         context.Context
+	cancel      context.CancelFunc
 }
 
-func NewService() *Service {
-	return &Service{}
+func NewService(c context.Context, ca context.CancelFunc) *Service {
+	return &Service{
+		ctx:    c,
+		cancel: ca,
+	}
 }
 
 // GRPCServer returns a grpc.Server instance with the services
 // populated.
 func (s *Service) GRPCServer() *grpc.Server {
 	gs := grpc.NewServer()
-	s.CalcServer = NewClaculatorServer()
+	s.CalcService = NewClaculatorService(s.ctx)
 
 	reflection.Register(gs)
 
-	protos.RegisterClaculatorServer(gs, s.CalcServer)
+	protos.RegisterClaculatorServer(gs, s.CalcService)
 
 	return gs
+}
+
+// Shutdown the service
+func (s *Service) Shutdown() {
+	fmt.Println("shut down service")
+	if s.cancel != nil {
+		s.cancel()
+	}
+
 }

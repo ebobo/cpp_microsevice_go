@@ -38,7 +38,7 @@ func (cms *CalcMicroService) Run() {
 			}
 			fmt.Println("question comming in", msg)
 			id, result, err := cms.doCalculation(msg.Id, msg.A, msg.B, msg.Type)
-			fmt.Printf("Result=%v", result)
+			fmt.Printf("Result=%v \n", result)
 			if err != nil {
 				fmt.Println(err)
 			} else {
