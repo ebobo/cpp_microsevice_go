@@ -3,6 +3,7 @@ module github.com/ebobo/cpp_microservice_go
 go 1.17
 
 require (
+	github.com/borud/broker v1.0.0
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.4.2
@@ -13,6 +14,7 @@ require (
 )
 
 require (
+	github.com/dghubble/trie v0.0.0-20201011220304-ed6d6b8add55 // indirect
 	github.com/felixge/httpsnoop v1.0.1 // indirect
 	github.com/golang/protobuf v1.5.0 // indirect
 	golang.org/x/net v0.0.0-20200822124328-c89045814202 // indirect

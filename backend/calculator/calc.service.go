@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"time"
 )
 
 type CalcMicroService struct {
@@ -50,6 +51,7 @@ func (cms *CalcMicroService) Run() {
 }
 
 func (cms *CalcMicroService) doCalculation(id string, pa int32, pb int32, typ string) (string, int32, error) {
+	time.Sleep(2 * time.Second)
 	var res int32 = 0
 	switch typ {
 	case "plus":

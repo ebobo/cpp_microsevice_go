@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/borud/broker"
 	"github.com/ebobo/cpp_microservice_go/protos"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -19,13 +20,17 @@ import (
 // that declares it.
 type Service struct {
 	CalcService *ClaculatorService
+	Broker      *broker.Broker
 	stopped     *sync.WaitGroup
 	ctx         context.Context
 	cancel      context.CancelFunc
 }
 
 func NewService(c context.Context, ca context.CancelFunc) *Service {
+	var config = broker.Config{DownStreamChanLen: 0, PublishChanLen: 0, SubscribeChanLen: 0, UnsubscribeChanLen: 0, DeliveryTimeout: 0}
+
 	return &Service{
+		Broker: broker.New(config),
 		ctx:    c,
 		cancel: ca,
 	}
@@ -35,7 +40,7 @@ func NewService(c context.Context, ca context.CancelFunc) *Service {
 // populated.
 func (s *Service) GRPCServer() *grpc.Server {
 	gs := grpc.NewServer()
-	s.CalcService = NewClaculatorService(s.ctx)
+	s.CalcService = New(s.ctx, s.Broker)
 
 	reflection.Register(gs)
 

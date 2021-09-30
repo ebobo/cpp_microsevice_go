@@ -89,7 +89,7 @@ export default Vue.extend({
 
     //server got the parameter
     parametersSended(data: any) {
-      this.progress = 0;
+      this.result = 0;
 
       if (!this.websocketConnection) {
         console.log('make a new connection');
@@ -110,7 +110,9 @@ export default Vue.extend({
         };
 
         this.websocketConnection.onmessage = (event) => {
-          this.progress = event?.data;
+          console.log(event?.data);
+          const json = JSON.parse(event.data);
+          this.result = json.result;
         };
       }
     },

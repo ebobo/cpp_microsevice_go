@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/borud/broker"
 	"github.com/ebobo/cpp_microservice_go/model"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -48,6 +49,25 @@ func reportProgess(conn *websocket.Conn) {
 	}
 }
 
+func reportAnswer(conn *websocket.Conn, sub *broker.Subscriber) {
+	defer func() {
+		sub.Cancel()
+		conn.WriteControl(websocket.CloseMessage, []byte{}, time.Now().Add(60*time.Second))
+		conn.Close()
+	}()
+	// log.Printf("report message %d", progress)
+	msg := <-sub.Messages()
+	json, err := json.Marshal(msg.Payload)
+
+	if err != nil {
+		log.Printf("error marshalling message to JSON: %v", err)
+		return
+	}
+
+	conn.WriteMessage(websocket.TextMessage, []byte(json))
+
+}
+
 func home(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`Hello, This is calculator server`))
@@ -66,7 +86,7 @@ func (s *Server) setParameters(w http.ResponseWriter, r *http.Request) {
 		json.Unmarshal(reqBody, &para)
 		json.NewEncoder(w).Encode(para)
 		// log.Println(para)
-		s.service.CalcServer.Notify("1", &para)
+		s.service.CalcService.Notify("1", &para)
 
 	case "PUT":
 		w.WriteHeader(http.StatusAccepted)
@@ -80,7 +100,7 @@ func (s *Server) setParameters(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func wsServices(w http.ResponseWriter, r *http.Request) {
+func (s *Server) wsServices(w http.ResponseWriter, r *http.Request) {
 	log.Println("ws services")
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 	ws, err := upgrader.Upgrade(w, r, nil)
@@ -89,13 +109,22 @@ func wsServices(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 	log.Println("Web Socket Client successfully connected")
-	go reportProgess(ws)
+
+	sub, err := s.service.Broker.Subscribe("question_answered")
+	if err != nil {
+		log.Printf("subscription to '%s' failed: %v", "question_answered", err)
+		http.Error(w, "subscription failed", http.StatusInternalServerError)
+		return
+	}
+
+	go reportAnswer(ws, sub)
+
 }
 
 func (s *Server) startREST() {
 	m := mux.NewRouter()
 	m.HandleFunc("/api/parameters", s.setParameters).Methods("POST")
-	m.HandleFunc("/api/ws", wsServices).Methods("GET")
+	m.HandleFunc("/api/ws", s.wsServices).Methods("GET")
 	m.HandleFunc("/", home).Methods("GET")
 
 	// Add CORS
