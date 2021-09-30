@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"log"
+	"os/exec"
+	"strconv"
 	"time"
 )
 
@@ -53,14 +56,28 @@ func (cms *CalcMicroService) Run() {
 func (cms *CalcMicroService) doCalculation(id string, pa int32, pb int32, typ string) (string, int32, error) {
 	time.Sleep(2 * time.Second)
 	var res int32 = 0
-	switch typ {
-	case "plus":
-		res = pa + pb
-	case "minus":
-		res = pa - pb
-	default:
-		res = 0
+	// switch typ {
+	// case "plus":
+	// 	res = pa + pb
+	// case "minus":
+	// 	res = pa - pb
+	// default:
+	// 	res = 0
+	// }
+	command := exec.Command("./cpp/calcApp", strconv.Itoa(int(pa)), strconv.Itoa(int(pb)))
+	var out bytes.Buffer
+	command.Stdout = &out
+	err := command.Run()
+	if err != nil {
+		log.Println(err)
 	}
 
+	i, err := strconv.ParseInt(out.String(), 10, 32)
+	if err != nil {
+		log.Println(err)
+	}
+
+	res = int32(i)
+	log.Println("doCalculation", res)
 	return id, res, nil
 }

@@ -16,6 +16,7 @@
           max="100"
         ></v-text-field>
       </v-col>
+      <v-col cols="1" align="center"> <h2 class="primary--text">+</h2></v-col>
       <v-col cols="3">
         <v-text-field
           v-model="numberB"
