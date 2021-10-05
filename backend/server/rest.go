@@ -121,10 +121,24 @@ func (s *Server) wsServices(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func (s *Server) loadImages(w http.ResponseWriter, r *http.Request) {
+	fileBytes, err := ioutil.ReadFile("images/plan_1.png")
+	if err != nil {
+		panic(err)
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Write(fileBytes)
+}
+
 func (s *Server) startREST() {
 	m := mux.NewRouter()
 	m.HandleFunc("/api/parameters", s.setParameters).Methods("POST")
 	m.HandleFunc("/api/ws", s.wsServices).Methods("GET")
+	
+	// testing load images
+	m.HandleFunc("/api/images", s.loadImages).Methods("GET")
+
 	m.HandleFunc("/", home).Methods("GET")
 
 	// Add CORS

@@ -26,6 +26,8 @@ func (s *Server) startGRPC() {
 		log.Printf("Starting gRPC at '%s'", s.grpcAddr)
 		s.grpcStarted.Done()
 		err = grpcServer.Serve(listener)
+		log.Printf("Starting 2")
+
 		if err != nil {
 			log.Printf("gRPC interface returned error: %v", err)
 		}
